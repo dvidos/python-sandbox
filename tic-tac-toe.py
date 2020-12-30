@@ -125,6 +125,23 @@ class Player:
             break
 
 
+def get_players():
+    print("1 - human vs human")
+    print("2 - human vs computer (human starts)")
+    print("3 - computer vs human (computer starts)")
+    print("4 - computer vs computer")
+    print("0 - exit")
+    t = get("Choose game type: ", '12340')
+    if t == '0':
+        return None
+    ai = Player.AI_RANDOM  # we'll make this configurable later
+    configurations = [
+        [Player('Human 1', 'X'), Player('Human 2', 'O')],
+        [Player('Human', 'X'), Player('Computer', 'O', ai)],
+        [Player('Computer', 'X', ai), Player('Human', 'O') ],
+        [Player('Computer 1', 'X', ai), Player('Computer 2', 'O', ai)],
+    ]
+    return configurations[int(t) - 1]
 
 def play_game(players):
     ttt = TTT()
@@ -145,19 +162,11 @@ def play_game(players):
         player = (player + 1) % 2
     
 
-print("1 - human vs human")
-print("2 - human vs computer (human starts)")
-print("3 - computer vs human (computer starts)")
-print("4 - computer vs computer")
-t = get("Choose game type: ", '1234')
-ai = Player.AI_RANDOM  # we'll make this configurable later
-configurations = [
-    [Player('Human 1', 'X'), Player('Human 2', 'O')],
-    [Player('Human', 'X'), Player('Computer', 'O', ai)],
-    [Player('Computer', 'X', ai), Player('Human', 'O') ],
-    [Player('Computer 1', 'X', ai), Player('Computer 2', 'O', ai)],
-]
-players = configurations[int(t) - 1]
-play_game(players)
+while True:
+    players = get_players()
+    if players == None:
+        break
+    print("")
+    play_game(players)
 
 
