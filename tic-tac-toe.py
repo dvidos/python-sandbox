@@ -20,11 +20,6 @@ class TTT:
         print("  ---+---+---")
         print(f"   {self.matrix[2][0]} | {self.matrix[2][1]} | {self.matrix[2][2]} ")
 
-    def clear(self):
-        for row in range(3):
-            for col in range(3):
-                self.matrix[row][col] = ' '
-        
     def is_finished(self):
         for row in range(3):
             for col in range(3):
@@ -35,6 +30,19 @@ class TTT:
     def can_play(self, row, col):
         return self.matrix[row][col] == ' '
 
+    def play(self, row, col, c):
+        if c != ' ' and self.matrix[row][col] != ' ':
+            raise RuntimeError(f"Cannot play at {row}, {col}, it is already taken")
+        self.matrix[row][col] = c
+
+    def clear(self, row, col):
+        self.matrix[row][col] = ' '
+
+    def clear_all(self):
+        for row in range(3):
+            for col in range(3):
+                self.matrix[row][col] = ' '
+        
     def has_won(self, c):
         for row in range(3):
             if self.matrix[row][0] == c and self.matrix[row][1] == c and self.matrix[row][2] == c:
@@ -59,37 +67,12 @@ class TTT:
                 if self.matrix[row][col] == ' ':
                     coords.append([row, col])
         return coords
-                
-    def play(self, coords, c):
-        if c != ' ' and self.matrix[coords[0]][coords[1]] != ' ':
-            raise RuntimeError(f"Cannot play at {coords}, it is already taken")
-        self.matrix[coords[0]][coords[1]] = c
 
-    def test_recursively(self):
-        for letter in ['X', 'O']:
-            if self.has_won(letter):
-                print(f"{letter} wins!")
-                self.print()
-                return
-        
-        coords = self.get_empty_coords()
-        if len(coords) == 0:
-            print(f"It's a tie")
-            self.print()
-            return
 
-        for c in coords:
-            letter = 'X' if self.player1 else 'O'
-            print(f"Player {letter} plays at {c}...")
-            self.play(c, letter)
-            self.player1 = not self.player1
-            # self.print()
-            # time.sleep(.075)
-            self.test_recursively()
-            self.play(c, ' ')
-    
 class Player:
     AI_RANDOM = 1
+    AI_AVOID_LOSING = 2
+    AI_WINNING = 3
 
     def __init__(self, name, symbol, intelligence=None):
         self.name = name
@@ -99,8 +82,8 @@ class Player:
     def move(self, ttt: TTT):
         if self.intelligence == None:
             self._move_human(ttt)
-        elif self.intelligence == self.AI_RANDOM:
-            self._move_computer_random(ttt)
+        else:
+            self._move_computer(ttt)
 
     def _move_human(self, ttt: TTT):
         while True:
@@ -110,20 +93,64 @@ class Player:
             if not ttt.can_play(row, col):
                 print("Cannot play there")
                 continue
-            ttt.play([row, col], self.symbol)
+            ttt.play(row, col, self.symbol)
             break
+    
+    def _move_computer(self, ttt: TTT):
+        if self.intelligence == self.AI_WINNING:
+            [row, col] = self._get_winning_location(ttt)
+            if row is not None and col is not None:
+                print(f"{self.name} plays at [{row},{col}] to win")
+                ttt.play(row, col, self.symbol)
+                return
 
-    def _move_computer_random(self, ttt: TTT):
+        if self.intelligence == self.AI_AVOID_LOSING:
+            [row, col] = self._get_avoid_losing_location(ttt)
+            if row is not None and col is not None:
+                print(f"{self.name} plays at [{row},{col}] to avoid losing")
+                ttt.play(row, col, self.symbol)
+                return
+
+        # falling back to random playing
+        [row, col] = self._get_random_location(ttt)
+        print(f"{self.name} plays at [{row},{col}] at random")
+        ttt.play(row, col, self.symbol)
+    
+    def _get_random_location(self, ttt):
         while True:
             r = random.randrange(9)
             row = int(r / 3)
             col = int(r % 3)
             if not ttt.can_play(row, col):
                 continue
-            print(f"Computer plays at {r+1}")
-            ttt.play([row, col], self.symbol)
-            break
+            return [row, col]
+   
+    def _get_winning_location(self, ttt):
+        # try to see if a location will win us the game
+        for row in range(3):
+            for col in range(3):
+                if not ttt.can_play(row, col):
+                    continue
+                ttt.play(row, col, self.symbol)
+                would_win = ttt.has_won(self.symbol)
+                ttt.clear(row, col)
+                if would_win:
+                    return [row, col]
+        return [None, None]
 
+    def _get_avoid_losing_location(self, ttt):
+        # try to see if other player will win if he played somewhere
+        other_player_symbol = 'X' if self.symbol == 'O' else 'O'
+        for row in range(3):
+            for col in range(3):
+                if not ttt.can_play(row, col):
+                    continue
+                ttt.play(row, col, other_player_symbol)
+                would_win = ttt.has_won(other_player_symbol)
+                ttt.clear(row, col)
+                if would_win:
+                    return [row, col]
+        return [None, None]
 
 def get_players():
     print("1 - human vs human")
@@ -131,17 +158,31 @@ def get_players():
     print("3 - computer vs human (computer starts)")
     print("4 - computer vs computer")
     print("0 - exit")
-    t = get("Choose game type: ", '12340')
-    if t == '0':
+    gt = get("Choose game type: ", '12340')
+    if gt == '0':
         return None
-    ai = Player.AI_RANDOM  # we'll make this configurable later
+
+    if gt in '234':
+        print("1 - random")
+        print("2 - avoid losing")
+        print("3 - winning")
+        it = get("Choose intelligence type: ", "123")
+
+    intelligences = [
+        Player.AI_RANDOM,
+        Player.AI_AVOID_LOSING,
+        Player.AI_WINNING,
+    ]
+    ai = intelligences[int(it) - 1]
+
     configurations = [
         [Player('Human 1', 'X'), Player('Human 2', 'O')],
         [Player('Human', 'X'), Player('Computer', 'O', ai)],
         [Player('Computer', 'X', ai), Player('Human', 'O') ],
-        [Player('Computer 1', 'X', ai), Player('Computer 2', 'O', ai)],
+        [Player('Zarg', 'X', ai), Player('Fizz', 'O', ai)],
     ]
-    return configurations[int(t) - 1]
+
+    return configurations[int(gt) - 1]
 
 def play_game(players):
     ttt = TTT()
