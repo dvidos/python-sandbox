@@ -1,3 +1,4 @@
+from typing import List
 
 
 class Move:
@@ -29,7 +30,7 @@ class Move:
                 return True
         return False
 
-    def get_winning_paths(self):
+    def get_winning_paths(self) -> List[List]:
         # if self is win, we are the only move to win (we should have no children)
         if self.outcome == 'win':
             return [[self]]
@@ -45,4 +46,20 @@ class Move:
             winning_paths.extend(paths)
 
         return winning_paths
+
+    def get_flattened_tree(self) -> List[List]:
+        # return a list of lists, flattened paths to leaves
+        if len(self.children) == 0:
+            return [[self]]
+
+        all_paths = []
+        for child in children:
+            paths = child.get_flattened_tree()
+            for path in paths:
+                path.insert(0, self)
+            all_paths.extend(paths)
+
+        return all_paths
+
+
 
