@@ -1,5 +1,4 @@
 
-command_queue = []
 
 class Board:
     def __init__(self, compacted=None):
@@ -160,28 +159,51 @@ class Board:
                     print(f"Row {row + 1}, Num {num} can go to " + ", ".join(locs))
         return possibles
 
+    def get_numbers_stats(self):
+        stats = {'1':0, '2':0, '3':0, '4':0, '5':0, '6':0, '7':0, '8':0, '9':0}
+        for row in range(9):
+            for col in range(9):
+                if self.rows[row][col] != ' ':
+                    stats[self.rows[row][col]] += 1
+        return stats
 
+
+
+
+
+command_queue = []
 
 b = Board()
-b.set_row(0, "      9  ")
-b.set_row(1, "  9 43 8 ")
-b.set_row(2, "3  7 1   ")
-b.set_row(3, "    8   9")
-b.set_row(4, "  5    6 ")
-b.set_row(5, "46    5  ")
-b.set_row(6, "  86   4 ")
-b.set_row(7, " 5  7    ")
-b.set_row(8, " 4 15 72 ")
 
-b.set_row(0, "  48659  ")
-b.set_row(1, "5 924368 ")
-b.set_row(2, "386791 5 ")
-b.set_row(3, " 3 586  9")
-b.set_row(4, "895    6 ")
-b.set_row(5, "46 9  5 8")
-b.set_row(6, "  86 9 45")
-b.set_row(7, "65  7 89 ")
-b.set_row(8, "943158726")
+b.set_row(0, "   41    ")
+b.set_row(1, " 8 7  2  ")
+b.set_row(2, " 7     5 ")
+b.set_row(3, "  6   3  ")
+b.set_row(4, "2   96 7 ")
+b.set_row(5, "    84   ")
+b.set_row(6, "53    8 4")
+b.set_row(7, "     9 6 ")
+b.set_row(8, " 4   1   ")
+
+# b.set_row(0, "      9  ")
+# b.set_row(1, "  9 43 8 ")
+# b.set_row(2, "3  7 1   ")
+# b.set_row(3, "    8   9")
+# b.set_row(4, "  5    6 ")
+# b.set_row(5, "46    5  ")
+# b.set_row(6, "  86   4 ")
+# b.set_row(7, " 5  7    ")
+# b.set_row(8, " 4 15 72 ")
+
+# b.set_row(0, "  48659  ")
+# b.set_row(1, "5 924368 ")
+# b.set_row(2, "386791 5 ")
+# b.set_row(3, " 3 586  9")
+# b.set_row(4, "895    6 ")
+# b.set_row(5, "46 9  5 8")
+# b.set_row(6, "  86 9 45")
+# b.set_row(7, "65  7 89 ")
+# b.set_row(8, "943158726")
 b.print()
 
 
@@ -190,12 +212,18 @@ def execute(board, cmd):
 
     if cmd == '?':
         print("\tp   : print")
-        print("\ta1=X: set number on row/col. enter no value after '=' to clear")
-        print("\ta1  : get info on cell")
-        print("\tq   : print command queue")
-        print("\tqe  : execute all commands from queue")
-        print("\tqc  : clear command queue")
+        print("\tA1=X: set number on row/col. enter no value after '=' to clear")
+        print("\tA1  : get info on cell")
+        print("\ts   : get number statistics")
+        print("\ta   : run the candidates-per-cell analysis")
+        print("\tb   : run the possible-locations-per-3x3-square analysis")
+        print("\tc   : run the possible-locations-per-column analysis")
+        print("\td   : run the possible-locations-per-row analysis")
+        print("\tl   : list command queue")
+        print("\t.   : execute all commands from queue")
+        print("\tcq  : clear command queue")
         print("\tv   : toggle verbose")
+        print("\tsolve : attempt to solve puzzle")
         print("\tquit: quit")
     elif len(cmd) >= 3 and cmd[2] == '=':
         [row, col] = board.rowcol(cmd)
@@ -214,33 +242,78 @@ def execute(board, cmd):
     elif cmd == 'p':
         board.print()
     elif cmd == 'a':
+        command_queue.clear()
         possibles = board.find_possible_numbers_for_each_cell(verbose)
         if len(possibles) > 0:
             print("Got " + ", ".join(possibles))
             command_queue.extend(possibles)
     elif cmd == 'b':
+        command_queue.clear()
         possibles = board.find_unique_number_locations_per_3x3_square(verbose)
         if len(possibles) > 0:
             print("Got " + ", ".join(possibles))
             command_queue.extend(possibles)
     elif cmd == 'c':
+        command_queue.clear()
         possibles = board.find_unique_number_locations_per_col(verbose)
         if len(possibles) > 0:
             print("Got " + ", ".join(possibles))
             command_queue.extend(possibles)
     elif cmd == 'd':
+        command_queue.clear()
         possibles = board.find_unique_number_locations_per_row(verbose)
         if len(possibles) > 0:
             print("Got " + ", ".join(possibles))
             command_queue.extend(possibles)
-    elif cmd == 'q':
-        print(f"{len(command_queue)} commands in queue")
-        print("\n".join(command_queue))
-    elif cmd == 'qe':
+    elif cmd == 's':
+        stats = board.get_numbers_stats()
+        for num, times in stats.items():
+            print(f"Num {num} -> {times} times")
+    elif cmd == 'solve':
+        while not board.filled():
+            something_found = False
+
+            cmds = board.find_possible_numbers_for_each_cell(verbose)
+            if len(cmds) > 0:
+                something_found = True
+                for cmd in cmds:
+                    print(cmd)
+                    execute(board, cmd)
+            
+            cmds = board.find_unique_number_locations_per_3x3_square(verbose)
+            if len(cmds) > 0:
+                something_found = True
+                for cmd in cmds:
+                    print(cmd)
+                    execute(board, cmd)
+            
+            cmds = board.find_unique_number_locations_per_col(verbose)
+            if len(cmds) > 0:
+                something_found = True
+                for cmd in cmds:
+                    print(cmd)
+                    execute(board, cmd)
+            
+            cmds = board.find_unique_number_locations_per_row(verbose)
+            if len(cmds) > 0:
+                something_found = True
+                for cmd in cmds:
+                    print(cmd)
+                    execute(board, cmd)
+
+            if not something_found:
+                print("No unique possible solutions found! -- cannot solve ?!?!?!")
+                break
+
+    elif cmd == 'l':
+        if len(command_queue) > 0:
+            print(f"{len(command_queue)} commands in queue")
+            print("\n".join(command_queue))
+    elif cmd == '.':
         for cmd in command_queue:
             execute(board, cmd)
         command_queue.clear()
-    elif cmd == 'qc':
+    elif cmd == 'cq':
         command_queue.clear()
     elif cmd == 'v':
         verbose = not verbose
