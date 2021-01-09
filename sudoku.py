@@ -38,6 +38,35 @@ class Board:
                     return False
         return True
 
+    def solved(self):
+        for row in range(9):
+            nums = []
+            for col in range(9):
+                n = self.rows[row][col]
+                if n != ' ' and n not in nums:
+                    nums.append(n)
+            if len(nums) != 9:
+                return False
+        for col in range(9):
+            nums = []
+            for row in range(9):
+                n = self.rows[row][col]
+                if n != ' ' and n not in nums:
+                    nums.append(n)
+            if len(nums) != 9:
+                return False
+        for sq_row in range(3):
+            for sq_col in range(3):
+                nums = []
+                for r in range(3):
+                    for c in range(3):
+                        n = self.rows[sq_row * 3 + r][sq_col * 3 + c]
+                        if n != ' ' and n not in nums:
+                            nums.append(n)
+                if len(nums) != 9:
+                    return False
+        return True
+
     def print(self):
         print("      1   2   3    4   5   6    7   8   9   ")
         print("   ++===+===+===++===+===+===++===+===+===++")
@@ -206,6 +235,42 @@ b.set_row(8, " 4   1   ")
 # b.set_row(8, "943158726")
 b.print()
 
+def try_to_solve(board):
+    while not board.filled():
+        something_found = False
+
+        cmds = board.find_possible_numbers_for_each_cell(verbose)
+        if len(cmds) > 0:
+            something_found = True
+            for cmd in cmds:
+                print(cmd)
+                execute(board, cmd)
+        
+        cmds = board.find_unique_number_locations_per_3x3_square(verbose)
+        if len(cmds) > 0:
+            something_found = True
+            for cmd in cmds:
+                print(cmd)
+                execute(board, cmd)
+        
+        cmds = board.find_unique_number_locations_per_col(verbose)
+        if len(cmds) > 0:
+            something_found = True
+            for cmd in cmds:
+                print(cmd)
+                execute(board, cmd)
+        
+        cmds = board.find_unique_number_locations_per_row(verbose)
+        if len(cmds) > 0:
+            something_found = True
+            for cmd in cmds:
+                print(cmd)
+                execute(board, cmd)
+
+        if not something_found:
+            print("No unique possible solutions found! -- cannot solve ?!?!?!")
+            break
+
 
 def execute(board, cmd):
     global verbose
@@ -231,6 +296,8 @@ def execute(board, cmd):
         try:
             board.set(row, col, val)
             board.print()
+            if board.solved():
+                print("Solved!")
         except Exception as e:
             print(str(e))
     elif len(cmd) == 2 and cmd[0].lower() in "abcdefghi" and cmd[1] in "123456789":
@@ -270,41 +337,7 @@ def execute(board, cmd):
         for num, times in stats.items():
             print(f"Num {num} -> {times} times")
     elif cmd == 'solve':
-        while not board.filled():
-            something_found = False
-
-            cmds = board.find_possible_numbers_for_each_cell(verbose)
-            if len(cmds) > 0:
-                something_found = True
-                for cmd in cmds:
-                    print(cmd)
-                    execute(board, cmd)
-            
-            cmds = board.find_unique_number_locations_per_3x3_square(verbose)
-            if len(cmds) > 0:
-                something_found = True
-                for cmd in cmds:
-                    print(cmd)
-                    execute(board, cmd)
-            
-            cmds = board.find_unique_number_locations_per_col(verbose)
-            if len(cmds) > 0:
-                something_found = True
-                for cmd in cmds:
-                    print(cmd)
-                    execute(board, cmd)
-            
-            cmds = board.find_unique_number_locations_per_row(verbose)
-            if len(cmds) > 0:
-                something_found = True
-                for cmd in cmds:
-                    print(cmd)
-                    execute(board, cmd)
-
-            if not something_found:
-                print("No unique possible solutions found! -- cannot solve ?!?!?!")
-                break
-
+        try_to_solve(board)
     elif cmd == 'l':
         if len(command_queue) > 0:
             print(f"{len(command_queue)} commands in queue")
@@ -319,7 +352,8 @@ def execute(board, cmd):
         verbose = not verbose
         print("Verbose is now " + ("on" if verbose else "off"))
     else:
-        print("Don't understand... ?=help")
+        print("Don't understand, enter '?' for help")
+
 
 verbose=False
 while True:
