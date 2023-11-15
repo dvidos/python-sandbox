@@ -1,6 +1,7 @@
 import time
 
-
+# given this graph, where 1 is land and 0 is water,
+# remote the islands (not the shores at the edges)
 a = [
     [ 1, 0, 0, 0, 0, 0 ],
     [ 0, 1, 0, 1, 1, 1 ],
@@ -135,5 +136,6 @@ def run():
         if not updated:
             break
         print_dependencies(deps)
+    print("No more updates")
 
 run()

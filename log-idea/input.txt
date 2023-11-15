@@ -1,0 +1,25 @@
+it is raining
+day of week is Wednesday
+location is Oklahoma
+
+# definition
+a grandparent is the parent of a parent
+
+# conditional definition, continues in next line
+if x is parent of parent of y
+    then x is grapdparent of y
+
+# non-english definition
+grandparent(x) = parent(parent(x))
+
+if item is fragile 
+    then storage aisles are 5-7
+
+if item is heavy
+    then storage levels are 1-2
+
+
+
+# there is always a context going around...
+# like if item is fragile, we assume the item
+q: where to put the carton?
