@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.scr": "scr",
+        "linkedlist.h": "c"
+    }
+}
